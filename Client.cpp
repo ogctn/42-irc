@@ -6,7 +6,6 @@ Client::Client(int c_fd, int c_id) : fd(c_fd), id(c_id) {
 
 Client::~Client()
 {
-   // close(fd);
 }
 
 void Client::setNick(std::string c_nick)

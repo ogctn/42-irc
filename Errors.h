@@ -2,7 +2,6 @@
 #define __ERRORS_H
 
 #define RPL_WELCOME(nick, user, host) (" 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host)
-#define RPL_deneme(nick) (" 001 " + nick + " :Welcome to the Internet Relay Network ")
 #define RPL_YOURHOST(nick, host) (" 002 " + nick + " :Your host is " + host + ", running version v1.0.0")
 #define RPL_CREATED(nick, date) (" 003 " + nick + " :This server was created " + date)
 

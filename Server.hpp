@@ -65,15 +65,19 @@ class Server
 		bool    isAlNumStr(std::string str);
 		void    handle_name(std::vector<std::string> &tokens);
 		void    eraseClient(int fd);
+	    void    eraseClientFromCh(std::vector<Channel>::iterator it, int fd);
 
         void	pass(std::vector<std::string> &tokens, int fd);
 		void	nick(std::vector<std::string> &tokens, int fd);
 		void	user(std::vector<std::string> &tokens, int fd);
 		void	privmsg(std::vector<std::string> &tokens, int fd);
 		void	join(std::vector<std::string> &tokens, int fd);
-		void	kick(std::vector<std::string> &tokens);
+		void	kick(std::vector<std::string> &tokens, int fd);
 		void	quit(std::vector<std::string> &tokens, int fd);
-		void	cap(std::vector<std::string> &tokens);
+		void	topic(std::vector<std::string> &tokens, int fd);
+		void	notice(std::vector<std::string> &tokens, int fd);
+		void	part(std::vector<std::string> &tokens, int fd);
+		void	cap(std::vector<std::string> &tokens, int fd);
 		void	sendReply(std::string msg, int fd);
 
 };
