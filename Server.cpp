@@ -185,10 +185,13 @@ void Server::parse_cl(int fd)
 			nick(tokens, fd);
 		else if (*tokens_it == "USER")
 			user(tokens, fd);
-        else if((*tokens_it == "JOIN" || *tokens_it == "PRIVMSG" || *tokens_it == "KICK" 
-				|| *tokens_it == "QUIT" || *tokens_it == "TOPIC" || *tokens_it == "NOTICE" 
-				|| *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered 
-				|| client_it->getNick().length() == 0))
+		else if (*tokens_it == "QUIT")
+			cap(tokens,fd);
+		else if (*tokens_it == "CAP")
+			cap(tokens,fd);
+		else if (*tokens_it == "PING")
+			cap(tokens,fd);
+        else if(!can_apply(tokens_it, client_it))
             sendCl(YELLOW(getHostname(), "PASS-NICK-USER before sending any other commands"), fd);
         else if (*tokens_it == "JOIN")
 			join(tokens, fd);
@@ -358,4 +361,15 @@ void Server::handle_name(std::vector<std::string> &tokens)
 		(*it).append((*(it + 1)));
 		tokens.erase(it+1);
 	}  
+}
+
+int	Server::can_apply(std::vector<std::string>::iterator tokens_it, std::vector<Client>::iterator client_it)
+{
+	if((*tokens_it == "JOIN" || *tokens_it == "PRIVMSG" || *tokens_it == "KICK" 
+        || *tokens_it == "TOPIC" || *tokens_it == "NOTICE" 
+        || *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered 
+        || client_it->getNick().length() == 0))
+		return (0);
+	else
+		return (1);
 }

@@ -316,3 +316,25 @@ void Server::part(std::vector<std::string> &tokens, int fd)
 	else
 		sendReply("Command form is: PART <channel> :[<message>]",fd);
 }
+void Server::ping(std::vector<std::string> &tokens, int fd)
+{
+	handle_name(tokens);
+	sendCl("PONG " + tokens[1] + "\r\n", fd);
+}
+
+void Server::cap(std::vector<std::string> &tokens, int fd)
+{
+    std::vector<std::string>::iterator tokens_it = tokens.begin();
+	std::vector<Client>::iterator client_it = findClient(fd);
+    if(*(tokens_it + 1) == "LS"){
+        std::string capLsCommand = "CAP * LS :multi-prefix sasl\r\n";
+		sendCl(capLsCommand, fd);
+    }
+    else if (*(tokens_it + 1) == "REQ") {
+        std::string reqParameter = *(tokens_it + 2);
+        if (reqParameter == ":multi-prefix") {
+            std::string capAckCommand = "CAP * ACK :multi-prefix\r\n";
+            sendCl(capAckCommand, fd);
+        }
+    }
+}

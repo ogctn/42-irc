@@ -78,7 +78,9 @@ class Server
 		void	notice(std::vector<std::string> &tokens, int fd);
 		void	part(std::vector<std::string> &tokens, int fd);
 		void	cap(std::vector<std::string> &tokens, int fd);
+		void	ping(std::vector<std::string> &tokens, int fd);
 		void	sendReply(std::string msg, int fd);
+		int		can_apply(std::vector<std::string>::iterator tokens_it, std::vector<Client>::iterator client_it);
 
 };
 
