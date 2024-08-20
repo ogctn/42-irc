@@ -33,9 +33,12 @@
 
 
 #define PASS_ERR() (" 464 :Password incorrect! Please check your password")
-#define ERR_NEEDMOREPARAMS(client, command) (" 461 " + client + " " + command + " :Not enough parameters\r\n")
-#define ERR_PASSWDMISMATCH(host) (": 464 " + host + " :Password incorrect\r\n")
 
+#define ERR_PASSWDMISMATCH(host) (": 464 " + host + " :Password incorrect\r\n")
+#define ERR_NEEDMOREPARAMS(client, command) (" 461 " + client + " " + command + " :Not enough parameters\r\n")
+#define ERR_UNKNOWNCOMMAND(client, command) (": 421 " + client + " " + command + " :\r\n")
+#define YELLOW(client, msg) (": 377 " + client + " :" + msg + "\r\n")
+#define ERR_NICKNAMEINUSE(client, nick) (": 377 " + client + " :" + nick + " :Nickname is already in use\r\n")
 
 
 #endif

@@ -5,7 +5,6 @@ void Server::pass(std::vector<std::string> &tokens, int fd)
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<Client>::iterator client_it = findClient(fd);
 
-
 	if(tokens.size() == 2)
 	{
 		if(*(tokens_it + 1) != _passwd)
@@ -29,7 +28,7 @@ void Server::nick(std::vector<std::string> &tokens, int fd)
 		if (!isAlNumStr(*(tokens_it + 1)))
 			sendReply(ERR_NICK(*(tokens_it + 1)),fd);
 		else if (findClientNick(*(tokens_it + 1)) != _clients.end())
-			sendReply(ERR_ALREADYREGISTERED(*(tokens_it + 1)),fd);
+			sendCl(ERR_NICKNAMEINUSE(getHostname(), *(tokens_it + 1)), fd);
 		else
 		{
 			std::vector<Channel>::iterator channel_it = channels.begin();
@@ -49,7 +48,7 @@ void Server::nick(std::vector<std::string> &tokens, int fd)
 		}
 	}
 	else
-		sendReply("Command form is: NICK <nickname>", fd);
+		sendReply(YELLOW(getHostname(), "Command form is: NICK <nickname>"), fd);
 }
 
 void Server::quit(std::vector<std::string> &tokens, int fd)

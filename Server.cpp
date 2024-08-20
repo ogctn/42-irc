@@ -174,12 +174,11 @@ void Server::parse_cl(int fd)
 		}
 	
 		std::vector<std::string>::iterator tokens_it = tokens.begin();
-
-print_vec(tokens);
-std::cout << "var" << std::endl;
 		if (tokens_it == tokens.end())
-			{++lines_it;
-			continue;}
+		{
+			++lines_it;
+			continue;
+		}
 		if (*tokens_it == "PASS")
 			pass(tokens, fd);
 		else if (*tokens_it == "NICK")
@@ -187,10 +186,10 @@ std::cout << "var" << std::endl;
 		else if (*tokens_it == "USER")
 			user(tokens, fd);
         else if((*tokens_it == "JOIN" || *tokens_it == "PRIVMSG" || *tokens_it == "KICK" 
-        || *tokens_it == "QUIT" || *tokens_it == "TOPIC" || *tokens_it == "NOTICE" 
-        || *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered 
-        || client_it->getNick().length() == 0))
-            sendCl(": use PASS-NICK-USER before sending any other commands", fd);
+				|| *tokens_it == "QUIT" || *tokens_it == "TOPIC" || *tokens_it == "NOTICE" 
+				|| *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered 
+				|| client_it->getNick().length() == 0))
+            sendCl(YELLOW(getHostname(), "PASS-NICK-USER before sending any other commands"), fd);
         else if (*tokens_it == "JOIN")
 			join(tokens, fd);
 		else if (*tokens_it == "PRIVMSG")
@@ -206,11 +205,9 @@ std::cout << "var" << std::endl;
 		else if (*tokens_it == "TOPIC")
 			topic(tokens, fd);
 		else
-			sendCl("command not found", fd);
+			sendCl(ERR_UNKNOWNCOMMAND(getHostname(), *tokens_it), fd);
 		
-		lines_it++;
-	std::cout << "YOK" << std::endl;
-	
+		lines_it++;	
 	}
 }
 
@@ -326,25 +323,12 @@ std::string Prefix(Server &s, int fd)
 void Server::sendReply(std::string msg, int fd)
 {
     std::string reply = Prefix(*this, fd) + msg + "\r\n";
-    for (int i = 0; i <= _maxfd; i++)
-    {
-        if (i == fd)
-        {
-			send(fd, reply.c_str(), reply.length(), 0);
-        }
-    }
+	send(fd, reply.c_str(), reply.length(), 0);
 }
 
 void Server::sendCl(std::string msg, int fd)
 {
-    for (int i = 0; i <= _maxfd; i++)
-    {
-        if (i == fd)
-        {
-
-            send(i, msg.c_str(), sizeof(msg), 0);
-        }
-    }
+    send(fd, msg.c_str(), msg.length(), 0);
 }
 
 bool Server::isAlNumStr(std::string str)
