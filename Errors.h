@@ -33,7 +33,8 @@
 
 
 #define PASS_ERR() (" 464 :Password incorrect! Please check your password")
-#define ERR_PASSWDMISMATCH(nick) (" 464 " + nick + "  : password supplied does not match the password expected by the server!")
+#define ERR_NEEDMOREPARAMS(client, command) (" 461 " + client + " " + command + " :Not enough parameters\r\n")
+#define ERR_PASSWDMISMATCH(host) (": 464 " + host + " :Password incorrect\r\n")
 
 
 

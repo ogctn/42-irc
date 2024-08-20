@@ -1,11 +1,5 @@
 #include "Server.hpp"
 
-template <typename T>
-void print_vec(T vec) {
-	for (typename T::iterator it = vec.begin(); it != vec.end(); ++it)
-		std::cout << *it << std::endl;
-}
-
 void Server::pass(std::vector<std::string> &tokens, int fd)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
@@ -15,14 +9,14 @@ void Server::pass(std::vector<std::string> &tokens, int fd)
 	if(tokens.size() == 2)
 	{
 		if(*(tokens_it + 1) != _passwd)
-			sendReply("PASS_ERR()", fd);
+			sendCl(ERR_PASSWDMISMATCH(getHostname()), fd);
 		else if (client_it->is_auth == true) //already registered eklenebilir mi?
 			return;
 		else
 			client_it->is_auth = true;
 	}
 	else
-		sendReply(": use PASS :Command form is: PASS <password>", fd);
+		sendCl(ERR_NEEDMOREPARAMS(client_it->getNick(), *(tokens.begin())), fd);
 }
 
 void Server::nick(std::vector<std::string> &tokens, int fd)
@@ -73,8 +67,6 @@ void Server::quit(std::vector<std::string> &tokens, int fd)
 	}
 	//quit komutuna mesaj eklemem gerekli mi
 }
-
-
 
 void	Server::user(std::vector<std::string> &tokens, int fd)
 {
@@ -193,6 +185,7 @@ void Server::privmsg(std::vector<std::string> &tokens, int fd)
 	else
 		sendReply("Command form is: PRIVMSG <recipient> :<message>",fd);
 }
+
 void Server::kick(std::vector<std::string> &tokens, int fd)
 {
 
@@ -222,6 +215,7 @@ void Server::kick(std::vector<std::string> &tokens, int fd)
 	else
 		sendReply("Command form is: KICK <channel> <client>",fd);
 }
+
 void Server::topic(std::vector<std::string> &tokens, int fd)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
@@ -288,6 +282,7 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 	else
 		sendReply("Command form is: NOTICE <recipient> :<message>",fd);
 }
+
 void Server::part(std::vector<std::string> &tokens, int fd)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();

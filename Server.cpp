@@ -119,6 +119,7 @@ int Server::Start() {
 						continue;
 					else {
 						_buff[ret-1] = '\0';
+						// if (std::string(_buff).find_first_not_of(" \n") == std::string::npos)
 						parse_cl(fd);
 						// buraya cemal ekstra koşullar eklemiş bir tek /n var gibi vb onlara bak
 						// sendToClis(fd);
@@ -129,6 +130,7 @@ int Server::Start() {
 		}
 	}
 }
+
 
 void read_from_buffer(std::vector<std::string> &lines, char *buff) {
 	
@@ -143,6 +145,12 @@ void read_from_buffer(std::vector<std::string> &lines, char *buff) {
 		else
 			lines.push_back(line);
 	}
+}
+
+template <typename T>
+void print_vec(T vec) {
+	for (typename T::iterator it = vec.begin(); it != vec.end(); ++it)
+		std::cout << *it << std::endl;
 }
 
 void Server::parse_cl(int fd)
@@ -166,14 +174,18 @@ void Server::parse_cl(int fd)
 		}
 	
 		std::vector<std::string>::iterator tokens_it = tokens.begin();
+
+print_vec(tokens);
+std::cout << "var" << std::endl;
+		if (tokens_it == tokens.end())
+			{++lines_it;
+			continue;}
 		if (*tokens_it == "PASS")
 			pass(tokens, fd);
 		else if (*tokens_it == "NICK")
 			nick(tokens, fd);
 		else if (*tokens_it == "USER")
 			user(tokens, fd);
-		else if (*tokens_it == "CAP")
-			cap(tokens,fd);
         else if((*tokens_it == "JOIN" || *tokens_it == "PRIVMSG" || *tokens_it == "KICK" 
         || *tokens_it == "QUIT" || *tokens_it == "TOPIC" || *tokens_it == "NOTICE" 
         || *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered 
@@ -193,7 +205,12 @@ void Server::parse_cl(int fd)
 			part(tokens, fd);
 		else if (*tokens_it == "TOPIC")
 			topic(tokens, fd);
+		else
+			sendCl("command not found", fd);
+		
 		lines_it++;
+	std::cout << "YOK" << std::endl;
+	
 	}
 }
 
