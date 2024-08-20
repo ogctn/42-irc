@@ -32,7 +32,7 @@ class Server
 	private:
 		int					_serverfd, _maxfd;
 		int					_c_id;
-		struct  sockaddr_in *_servaddr;
+		struct  sockaddr_in _servaddr;
 		char				_buff[BUFFER_SIZE];
 		fd_set				_read_set, _write_set, _current;
 		socklen_t			_len;

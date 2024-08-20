@@ -2,10 +2,7 @@
 
 Server::Server() {}
 
-Server::~Server() {
-	if (_servaddr)
-		delete _servaddr;
-}
+Server::~Server() {}
 
 
 void	Server::arg_control(int ac, char **av)
@@ -68,16 +65,14 @@ int Server::init(int port, std::string pass)
 	FD_ZERO(&_current);
 	FD_SET(_serverfd, &_current);
 
-	sockaddr_in	*sa;
-	sa = new sockaddr_in();
-	memset(sa, 0, sizeof(*sa));
-	sa->sin_port = htons(port);
-	sa->sin_addr.s_addr = INADDR_ANY;
-	sa->sin_family = AF_INET;
-	if ((bind(fd, (const sockaddr *)sa, sizeof(*sa))) == -1)
+
+	memset(&_servaddr, 0, sizeof(_servaddr));
+	_servaddr.sin_port = htons(port);
+	_servaddr.sin_addr.s_addr = INADDR_ANY;
+	_servaddr.sin_family = AF_INET;
+	if ((bind(fd, (const sockaddr *)&_servaddr, sizeof(_servaddr))) == -1)
 		return (-1);
-	_servaddr = sa;
-	_len = sizeof(*_servaddr);
+	_len = sizeof(_servaddr);
 
 	return (0);
 }
@@ -98,7 +93,7 @@ int Server::Start() {
 			if (FD_ISSET(fd, &_read_set)) {
 				int clientfd, ret;
 				if (fd == _serverfd) {
-					if ((clientfd = accept(_serverfd, (struct sockaddr *)_servaddr, &_len)) < 0)
+					if ((clientfd = accept(_serverfd, (struct sockaddr *)&_servaddr, &_len)) < 0)
 						return (-1);
 
 					++_c_id;
