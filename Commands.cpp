@@ -221,7 +221,7 @@ void Server::topic(std::vector<std::string> &tokens, int fd)
 	{
 		*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
 		if(ch_it == channels.end())
-			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
+			sendCl(ERR_NOSUCHCHANNEL(_hostname, *(tokens_it + 1)), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd)->is_operator == false)
@@ -254,7 +254,7 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 		{
 			*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
 			if (ch_it == channels.end())
-				sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
+				sendCl(ERR_NOSUCHCHANNEL(_hostname, *(tokens_it + 1)), fd);
 			else if (findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 				sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 			else
@@ -276,7 +276,7 @@ void Server::part(std::vector<std::string> &tokens, int fd)
 		if (tokens.size() >= 3)
             handle_name(tokens);
 		if(ch_it == channels.end())
-			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
+			sendCl(ERR_NOSUCHCHANNEL(_hostname, *(tokens_it + 1)), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else
