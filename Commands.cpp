@@ -110,26 +110,26 @@ void Server::join(std::vector<std::string> &tokens, int fd)
 			{
 				ch_it->addClient(findClient(fd));
 				sendToClisInCh(ch_it, RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)),fd);
-				/*sendToClient(RPL_JOIN(client_it->nickname, client_it->username, *(tokens_it + 1)));
-				if (channel_it->topic.length() == 0)
-					sendReply(RPL_NOTOPIC(client_it->nickname, *(tokens_it + 1)));
+				sendCl(RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)),fd);
+				if (ch_it->getTopic().length() == 0)
+					sendReply(RPL_NOTOPIC(client_it->getNick(), *(tokens_it + 1)),0);
 				else
-					sendReply(RPL_TOPIC(client_it->nickname, *(tokens_it + 1), channel_it->topic));
-				if (channel_it->operator_array.size() > 0)
+					sendReply(RPL_TOPIC(client_it->getNick(), *(tokens_it + 1), ch_it->getTopic()),fd);
+				if (ch_it->clients_ch.size() > 0)
 				{
-					std::vector<client_t>::iterator it = channel_it->operator_array.begin();
-					std::string users = it->nickname;
+					std::vector<Client>::iterator it = ch_it->clients_ch.begin();
+					std::string users = it->getNick();
 					it++;
-					while (it != channel_it->operator_array.end())
+					while (it != ch_it->clients_ch.end())
 					{
-						users += (" " + it->nickname);
+						users += (" " + it->getNick());
 						it++;
 					}
-					sendReply(RPL_USRS(client_it->nickname, *(tokens_it + 1), users));
-					sendReply(RPL_EONL(client_it->nickname, *(tokens_it + 1)));
+					sendReply(RPL_USRS(client_it->getNick(), *(tokens_it + 1), users), fd);
+					sendReply(RPL_EONL(client_it->getNick(), *(tokens_it + 1)), fd);
 				}
 				else
-					sendToClient(RPL_MODE(client_it->nickname, client_it->username, *(tokens_it + 1)));*/
+					sendReply(RPL_MODE(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
 			}
 			else
 				sendCl("Already joined to this channel", fd);
