@@ -63,7 +63,7 @@ class Server
 		void    parse_cl(int fd);
 		bool    isAlNumStr(std::string str);
 		void    handle_name(std::vector<std::string> &tokens);
-		void    eraseClient(int fd);
+		void    eraseClient(int fd, int flag);
 	    void    eraseClientFromCh(std::vector<Channel>::iterator it, int fd);
 		bool	isValidNick(std::vector<std::string>::iterator &tokens_it);
 		void	sendReply(std::string msg, int fd);

@@ -113,7 +113,7 @@ int Server::Start() {
 						else
 							std::cerr << "recv error\n";
 						FD_CLR(fd, &_current);
-						eraseClient(fd);
+						eraseClient(fd, 1);
 						close(fd);
 					}
 					else if (ret == 1 && *_buff == '\n')
@@ -121,7 +121,6 @@ int Server::Start() {
 					else {
 						_buff[ret-1] = '\0';
 						parse_cl(fd);
-						// buraya cemal ekstra koşullar eklemiş bir tek /n var gibi vb onlara bak
 					}
 				}
 				memset(_buff, 0, sizeof(_buff));
@@ -262,9 +261,11 @@ std::vector<Channel>::iterator Server::findChannel(std::string str)
 	return (channel_it);
 }
 
-void Server::eraseClient(int fd)
+void Server::eraseClient(int fd, int flag)
 {
     std::vector<Channel>::iterator channel_it = channels.begin();
+	if(flag == 0)
+		std::cout << "Client " << findClient(fd)->getId() << " left the server" << std::endl;
 	while (channel_it != channels.end())
 	{
 		if(findClientInCh(channel_it,fd) != channel_it->clients_ch.end())

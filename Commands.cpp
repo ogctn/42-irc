@@ -62,7 +62,7 @@ void Server::quit(std::vector<std::string> &tokens, int fd)
 		sendReply("Client "+ std::to_string(findClient(fd)->getId())
 					 + " left the server ", fd);
         FD_CLR(fd, &_current);
-		eraseClient(fd);
+		eraseClient(fd, 0);
         close(fd);
     }
 	else if (tokens.size() == 2 && tokens[1][0] == ':')
@@ -70,7 +70,7 @@ void Server::quit(std::vector<std::string> &tokens, int fd)
 		sendReply("Client "+ std::to_string(findClient(fd)->getId())
 					 + " left the server " + tokens[1], fd);
 		FD_CLR(fd, &_current);
-		eraseClient(fd);
+		eraseClient(fd, 0);
 		close(fd);
 	}
     else
@@ -275,7 +275,6 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 void Server::part(std::vector<std::string> &tokens, int fd)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
-	std::vector<Client>::iterator client_it = findClient(fd);
 	std::vector<Channel>::iterator ch_it = findChannel(*(tokens_it + 1));
 	if((*(tokens_it + 1))[0] == '#' && (*(tokens_it + 1)).length() >= 2 && ((tokens.size() >= 3 && tokens[2][0] == ':') || tokens.size() == 2))
 	{
@@ -289,14 +288,11 @@ void Server::part(std::vector<std::string> &tokens, int fd)
 		{
 			if(tokens.size() >= 3)
 			{
-				sendToClisInCh(ch_it, PARTWITHREASON(_hostname, client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
-				sendCl(PARTWITHREASON(_hostname, client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
-
+				sendCl((Prefix(findClient(fd), _hostname) + " PART " + ch_it->getName() + "\r\n"), fd);
+				sendToClisInCh(ch_it, (Prefix(findClient(fd), _hostname) + " PART " + ch_it->getName() + " " + tokens[2] + "\r\n"), fd);
 			}
 			else
 			{
-				//sendToClisInCh(ch_it , PART(_hostname, client_it->getNick(), client_it->getUname(), tokens[1]), fd);
-				//sendCl(PART(_hostname, client_it->getNick(), client_it->getUname(), tokens[1]), fd);
 				sendCl((Prefix(findClient(fd), _hostname) + " PART " + ch_it->getName() + "\r\n"), fd);
 				sendToClisInCh(ch_it, (Prefix(findClient(fd), _hostname) + " PART " + ch_it->getName() + "\r\n"), fd);
 			}
