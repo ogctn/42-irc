@@ -1,9 +1,9 @@
 #ifndef __ERRORS_H
 #define __ERRORS_H
 
-#define RPL_WELCOME(nick, user, host) (" 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host)
-#define RPL_YOURHOST(nick, host) (" 002 " + nick + " :Your host is " + host + ", running version v1.0.0")
-#define RPL_CREATED(nick, date) (" 003 " + nick + " :This server was created " + date)
+#define RPL_WELCOME(nick, user, host) (":" + host + " 001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + host + "\r\n")
+#define RPL_YOURHOST(nick, host) (":" + host + " 002 " + nick + " :Your host is " + host + ", running version v1.0.0\r\n")
+#define RPL_CREATED(nick, host, date) (":" + host + " 003 " + nick + " :This server was created " + date + "\r\n")
 
 #define RPL_NOTOPIC(nick, channel) (" 331 " + nick + " " + channel + " :No topic is set")
 #define RPL_TOPIC(nick, channel, topic) (" 332 " + nick + " " + channel + " " + topic)
@@ -17,28 +17,26 @@
 #define KICK(nick, user, channel, kicked) (":" + nick + "!" + user + "@* KICK " + channel + " " + kicked)
 #define NOTICE(nick, user, noticed, msg) (":" + nick + "!" + user + "@* NOTICE " + noticed + " " + msg)
 
-#define ERR_USERNOTINCHANNEL(nickname, username) (" 482 " + client + " " + nickname + " :You're not channel operator")
-#define ERR_CHANOPRIVSNEEDED(notyournick, username) (" 441 " + client + " " + nickname + " :They aren't on that channel")
-#define NOTONCHANNEL(client, channel) (" 442 " + client + " " + channel + " :You're not on that channel")
-#define NO_SUCH_CHANNEL(nickname, op) (" 403 " + nickname + " " + op + " :No such channel")
-#define USERONCHANNEL(client, channel) (" 443 " + client + " :cannot join because " + channel)
-#define NO_NICKNAME(client, nickname) (" 401 " + client + " " + nickname + " :No such nick")
-#define ERR_NICK(nick) (" 432 " + nick + " :Erroneus nickname")
 #define NICKNAME_IN_USE(nickname) (" 433 " + nickname + " :Nickname is already in use. Please provide your password with 'USERPASS: <password> if you have this nickname already!'")
-#define ERR_ALREADYREGISTERED(nickname) (" 462 " + nickname + " :Already registered."  )
 
 #define TOPICCHANGED(nickname, username, channelname, topic) (":" + nickname + "!" + username + "@* TOPIC " + channelname + " " + topic)
 #define PART(nickname, username, channelname) (":"+ nickname + "!" + username +"@* PART " + channelname)
 #define PARTWITHREASON(nickname, username, channelname, reason) (":"+ nickname + "!" + username + "@* PART " + channelname + " " + reason)
 
 
-#define PASS_ERR() (" 464 :Password incorrect! Please check your password")
-
+#define ERR_USERNOTINCHANNEL(host, notyournick, channel) (": 441 " + host + " " + channel + " " + notyournick + " :They aren't on that channel\r\n")
+#define ERR_CHANOPRIVSNEEDED(host, channel) (" 482 " + host + " " + channel + " :You're not channel operator\r\n")
+#define ERR_NOTONCHANNEL(host, channel) (": 442 " + host + " " + channel + " :You're not on that channel\r\n")
+#define ERR_NOSUCHCHANNEL(host, channel) (": 403 " + host + " " + channel + " :No such channel\r\n")
+#define ERR_NOSUCHNICK(host, nick) (": 401 " + host + " " + nick + " :No such nick/channel\r\n")
+#define ERR_ALREADYREGISTERED(host, nick) (" 462 " + host + " :" + nick +  " :You may not reregister\r\n")
 #define ERR_PASSWDMISMATCH(host) (": 464 " + host + " :Password incorrect\r\n")
-#define ERR_NEEDMOREPARAMS(client, command) (" 461 " + client + " " + command + " :Not enough parameters\r\n")
-#define ERR_UNKNOWNCOMMAND(client, command) (": 421 " + client + " " + command + " :\r\n")
-#define YELLOW(client, msg) (": 377 " + client + " :" + msg + "\r\n")
-#define ERR_NICKNAMEINUSE(client, nick) (": 377 " + client + " :" + nick + " :Nickname is already in use\r\n")
+#define ERR_NEEDMOREPARAMS(host, command) (" 461 " + host + " " + command + " :Not enough parameters\r\n")
+#define ERR_UNKNOWNCOMMAND(host, command) (": 421 " + host + " " + command + " :\r\n")
+#define ERR_ERRONEUSNICKNAME(host, nick) (": 432 " + host + " :" + nick + " :Erroneus nickname\r\n")
+#define YELLOW(host, msg) (": 377 " + host + " :" + msg + "\r\n")
+#define ERR_NICKNAMEINUSE(host, nick) (": 377 " + host + " :" + nick + " :Nickname is already in use\r\n")
 
 
 #endif
+

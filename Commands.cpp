@@ -9,8 +9,8 @@ void Server::pass(std::vector<std::string> &tokens, int fd)
 	{
 		if(*(tokens_it + 1) != _passwd)
 			sendCl(ERR_PASSWDMISMATCH(getHostname()), fd);
-		else if (client_it->is_auth == true) //already registered eklenebilir mi?
-			return;
+		else if (client_it->is_auth == true)
+			sendCl(ERR_ALREADYREGISTERED(getHostname(), client_it->getNick()), fd);
 		else
 			client_it->is_auth = true;
 	}
@@ -26,7 +26,7 @@ void Server::nick(std::vector<std::string> &tokens, int fd)
 	if (tokens.size() == 2)
 	{
 		if (!isAlNumStr(*(tokens_it + 1)))
-			sendReply(ERR_NICK(*(tokens_it + 1)),fd);
+			sendCl(ERR_ERRONEUSNICKNAME(getHostname(), *(tokens_it + 1)), fd);
 		else if (findClientNick(*(tokens_it + 1)) != _clients.end())
 			sendCl(ERR_NICKNAMEINUSE(getHostname(), *(tokens_it + 1)), fd);
 		else
@@ -43,34 +43,32 @@ void Server::nick(std::vector<std::string> &tokens, int fd)
 				}
 				channel_it++;
 			}
-			sendCl(RPL_NICK(client_it->getNick(), client_it->getUname(), (*(tokens_it + 1))),fd);
+			sendReply("Nickname has been set as: " + *(tokens_it + 1), fd);
             client_it->setNick(*(tokens_it + 1));
 		}
 	}
 	else
-		sendReply(YELLOW(getHostname(), "Command form is: NICK <nickname>"), fd);
+		sendReply("Command form is: NICK <nickname>", fd);
 }
 
 void Server::quit(std::vector<std::string> &tokens, int fd)
 {
     if (tokens.size() == 1)
     {
+		sendReply("Client "+ std::to_string(findClient(fd)->getId())
+					 + " left the server " + tokens[1] + "\r\n", fd);
         FD_CLR(fd, &_current);
         close(fd);
 		eraseClient(fd);
-        std::cout << "Client " << findClient(fd)->getId() << " left the server" << std::endl;
     }
     else
-	{
-		sendReply("Command form is: QUIT", fd);
-	}
-	//quit komutuna mesaj eklemem gerekli mi
+		sendReply("Command form is: QUIT :<message>", fd);
 }
 
 void	Server::user(std::vector<std::string> &tokens, int fd)
 {
 	//user commandına channel içinde de değiştrime olucak mı veya değiştirilebilir bir şey mi
-	//bir kere atanan bir şey mi 
+	//bir kere atanan bir şey mi
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<Client>::iterator client_it = findClient(fd);
 
@@ -79,24 +77,25 @@ void	Server::user(std::vector<std::string> &tokens, int fd)
 	{
 		*(tokens_it + 4) = (*(tokens_it + 4)).substr(1, sizeof(*(tokens_it + 4)) - 1);
 		if (client_it->getUname().empty() == false || client_it->getRname().empty() == false)
-			sendReply(": you are already registered!",fd);
+			sendCl(ERR_ALREADYREGISTERED(getHostname(), client_it->getNick()), fd);
 		else
 		{
 			client_it->setUname(*(tokens_it + 1));
 			client_it->setRname(*(tokens_it + 4));
 			client_it->is_registered = true;
 
-			sendReply(RPL_WELCOME(client_it->getNick(), client_it->getUname(), _hostname),fd);
-			sendReply(RPL_YOURHOST(client_it->getNick(), _hostname),fd);
-			sendReply(RPL_CREATED(client_it->getNick(), _date),fd);
+			sendCl(RPL_WELCOME(client_it->getNick(), client_it->getUname(), _hostname),fd);
+			sendCl(RPL_YOURHOST(client_it->getNick(), _hostname),fd);
+			sendCl(RPL_CREATED(client_it->getNick(), _hostname, _date),fd);
 		}
 	}
 	else
-	{
 		sendReply("Command form is: USER <username> <mode> <unused> :realname",fd);
-	}
 }
-
+std::string Prefix(std::vector<Client>::iterator users, std::string host)
+{
+    return ":" + users->getNick() + "!" + users->getUname() + "@" + host;
+} 
 void Server::join(std::vector<std::string> &tokens, int fd)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
@@ -109,7 +108,7 @@ void Server::join(std::vector<std::string> &tokens, int fd)
 			if(findClientInCh(ch_it,fd) == ch_it->clients_ch.end())
 			{
 				ch_it->addClient(findClient(fd));
-				sendToClisInCh(ch_it, RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)),fd);
+				sendToClisInCh(ch_it, RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
 				sendCl(RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)),fd);
 				if (ch_it->getTopic().length() == 0)
 					sendReply(RPL_NOTOPIC(client_it->getNick(), *(tokens_it + 1)),0);
@@ -132,19 +131,28 @@ void Server::join(std::vector<std::string> &tokens, int fd)
 					sendReply(RPL_MODE(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
 			}
 			else
-				sendCl("Already joined to this channel", fd);
+				sendReply("Already joined to this channel", fd);
 		}
 		else
 		{
 			Channel new_ch((*(tokens_it + 1)), findClient(fd));
 			channels.push_back(new_ch);
-			sendReply(RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
-			sendReply(RPL_MODE(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
-			sendReply(RPL_NOTOPIC(client_it->getNick(), *(tokens_it + 1)), fd);
+			// sendReply(RPL_JOIN(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
+			// sendReply(RPL_MODE(client_it->getNick(), client_it->getUname(), *(tokens_it + 1)), fd);
+			// sendReply(RPL_NOTOPIC(client_it->getNick(), *(tokens_it + 1)), fd);
+
+			sendCl((Prefix(findClient(fd), _hostname) + " JOIN " + (*(tokens_it + 1)) + "\r\n"), fd);
+        	sendCl( Prefix(findClient(fd), _hostname) + " MODE " + (*(tokens_it + 1)) + " +o " + client_it->getNick() + "\r\n", fd);
 		}
 	}
 	else
 		sendReply("Command form is: JOIN #channel",fd);
+}
+
+bool Server::isValidNick(std::vector<std::string>::iterator &tokens_it) {
+	return (findClientNick(*(tokens_it + 1)) == _clients.end() ||
+			findClientNick(*(tokens_it + 1))->is_registered == false ||
+			findClientNick(*(tokens_it + 1))->is_auth == false );
 }
 
 void Server::privmsg(std::vector<std::string> &tokens, int fd)
@@ -160,26 +168,16 @@ void Server::privmsg(std::vector<std::string> &tokens, int fd)
 		{
 			std::vector<Channel>::iterator ch_it = findChannel(*(tokens_it + 1));
 			if (ch_it == channels.end())
-			{
-				sendReply(": Channel cannot be found.", fd);
-			}
+				sendCl(ERR_NOSUCHNICK(_hostname, client_it->getNick()), fd);
 			else if (findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
-			{
-				sendReply(": You are not in channel", fd);
-			}
+				sendReply("You are not in channel:" + ch_it->getName(), fd);
 			else
 				sendToClisInCh(ch_it, RPL_PRIV(client_it->getNick(), client_it->getUname(), ch_it->getName(), (*(tokens_it + 2))), fd);
 		}
-		else if (findClientNick(*(tokens_it + 1)) == _clients.end() ||
-					findClientNick(*(tokens_it + 1))->is_registered == false ||
-					findClientNick(*(tokens_it + 1))->is_auth == false)
-		{
-			sendReply(": User not found.", fd);
-		}
+		else if (isValidNick(tokens_it))
+			sendCl(ERR_NOSUCHNICK(_hostname, client_it->getNick()), fd);
 		else
-		{
 			sendReply(RPL_PRIVUS(client_it->getNick(), client_it->getUname(), (*(tokens_it + 1)), (*(tokens_it + 2))), findClientNick(*(tokens_it + 1))->getFd());
-		}
 	}
 	else
 		sendReply("Command form is: PRIVMSG <recipient> :<message>",fd);
@@ -195,19 +193,19 @@ void Server::kick(std::vector<std::string> &tokens, int fd)
 	{
 		std::vector<Client>::iterator clientkick_it = findClientNick((*(tokens_it + 2)));
 		if(ch_it == channels.end())
-			sendReply(": Channel cannot be found.", fd);
+			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
-			sendReply(": You are not in channel.", fd);
+			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd)->is_operator == false)
-			sendReply(": You are not an operator!", fd);
+			sendCl(ERR_CHANOPRIVSNEEDED(_hostname, ch_it->getName()), fd);
 		else if(clientkick_it == _clients.end())
-			sendReply(": User cannot found", fd);
+			sendCl(ERR_NOSUCHNICK(_hostname, client_it->getNick()), fd);
 		else if(findClientInCh(ch_it, clientkick_it->getFd()) == ch_it->clients_ch.end())
-			sendReply(": User is not in channel", fd);
+			sendCl(ERR_USERNOTINCHANNEL(_hostname, client_it->getNick(), ch_it->getName()), fd);
 		else
 		{
 			eraseClientFromCh(ch_it, clientkick_it->getFd());
-			sendCl(KICK(client_it->getNick(), client_it->getUname(), ch_it->getName(), clientkick_it->getNick()), fd);
+			sendReply(KICK(client_it->getNick(), client_it->getUname(), ch_it->getName(), clientkick_it->getNick()), fd);
 			sendToClisInCh(ch_it, KICK(client_it->getNick(), client_it->getUname(), ch_it->getName(), clientkick_it->getNick()), fd);
 		}
 	}
@@ -226,15 +224,15 @@ void Server::topic(std::vector<std::string> &tokens, int fd)
 	{
 		*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
 		if(ch_it == channels.end())
-			sendReply(": Channel cannot be found.", fd);
+			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
-			sendReply(": You are not in channel.", fd);
+			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd)->is_operator == false)
-			sendReply(": You are not an operator!", fd);
+			sendCl(ERR_CHANOPRIVSNEEDED(_hostname, ch_it->getName()), fd);
 		else
 			ch_it->setTopic(*(tokens_it + 2));
 			sendToClisInCh(ch_it, TOPICCHANGED(client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
-			sendCl(TOPICCHANGED(client_it->getNick(), client_it->getUname(), ch_it->getName(), ch_it->getTopic()), fd);
+			sendReply(TOPICCHANGED(client_it->getNick(), client_it->getUname(), ch_it->getName(), ch_it->getTopic()), fd);
 			sendReply(RPL_TOPIC(client_it->getNick(), ch_it->getName(), ch_it->getTopic()), fd);
 	}
 	else
@@ -249,6 +247,7 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
 	std::vector<Client>::iterator client_it = findClient(fd);
 	handle_name(tokens);
+
 	if(tokens.size() == 3 && (*(tokens_it + 2))[0] == ':' && (*(tokens_it + 2)).length() >= 2)
 	{
 		*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
@@ -256,27 +255,17 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 		{
 			std::vector<Channel>::iterator ch_it = findChannel(*(tokens_it + 1));
 			if (ch_it == channels.end())
-			{
-				sendReply(": Channel cannot be found.", fd);
-			}
+				sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
 			else if (findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
-			{
-				sendReply(": You are not in channel.", fd);
-			}
+				sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 			else
 				sendToClisInCh(ch_it, NOTICE(client_it->getNick(), client_it->getUname(), *(tokens_it +1), *(tokens_it + 2)), fd); //burası düzenlenebilir
 		}
-		else if (findClientNick(*(tokens_it + 1)) == _clients.end() 
-		|| findClientNick(*(tokens_it + 1))->is_registered == false 
-		|| findClientNick(*(tokens_it + 1))->is_auth == false)
-		{
-			sendReply(": User not found.", fd);
-		}
+		else if (isValidNick(tokens_it))
+			sendCl(ERR_NOSUCHNICK(_hostname, client_it->getNick()), fd);
 		else
-		{
-			sendCl(NOTICE(client_it->getNick(), client_it->getUname(), *(tokens_it +1), *(tokens_it + 2)), findClientNick(*(tokens_it + 1))->getFd());
-		}
-
+			sendReply(NOTICE(client_it->getNick(), client_it->getUname(), *(tokens_it +1), *(tokens_it + 2)),
+							 findClientNick(*(tokens_it + 1))->getFd());
 	}
 	else
 		sendReply("Command form is: NOTICE <recipient> :<message>",fd);
@@ -292,26 +281,24 @@ void Server::part(std::vector<std::string> &tokens, int fd)
 		if (tokens.size() >= 3)
             handle_name(tokens);
 		if(ch_it == channels.end())
-			sendReply(": Channel cannot be found.", fd);
+			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
-			sendReply(": You are not in channel.", fd);
+			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else
 		{
 			eraseClientFromCh(ch_it, fd);
 			if(tokens.size() >= 3)
 			{
 				sendToClisInCh(ch_it, PARTWITHREASON(client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
-				sendCl(PARTWITHREASON(client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
+				sendReply(PARTWITHREASON(client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
 
 			}
 			else
 			{
 				sendToClisInCh(ch_it , PART(client_it->getNick(), client_it->getUname(), tokens[1]), fd);
-				sendCl(PART(client_it->getNick(), client_it->getUname(), tokens[1]), fd);
+				sendReply(PART(client_it->getNick(), client_it->getUname(), tokens[1]), fd);
 			}
-
 		}
-
 	}
 	else
 		sendReply("Command form is: PART <channel> :[<message>]",fd);
@@ -324,17 +311,16 @@ void Server::ping(std::vector<std::string> &tokens, int fd)
 
 void Server::cap(std::vector<std::string> &tokens, int fd)
 {
-    std::vector<std::string>::iterator tokens_it = tokens.begin();
-	std::vector<Client>::iterator client_it = findClient(fd);
+	std::vector<std::string>::iterator tokens_it = tokens.begin();
     if(*(tokens_it + 1) == "LS"){
         std::string capLsCommand = "CAP * LS :multi-prefix sasl\r\n";
-		sendCl(capLsCommand, fd);
+		sendReply(capLsCommand, fd);
     }
     else if (*(tokens_it + 1) == "REQ") {
         std::string reqParameter = *(tokens_it + 2);
         if (reqParameter == ":multi-prefix") {
             std::string capAckCommand = "CAP * ACK :multi-prefix\r\n";
-            sendCl(capAckCommand, fd);
+            sendReply(capAckCommand, fd);
         }
     }
 }

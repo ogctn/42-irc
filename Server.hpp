@@ -10,7 +10,7 @@
 # include <fstream>
 # include <arpa/inet.h>
 # include <vector>
-# include <iterator>    // unnecessary ????
+# include <iterator>
 # include <sstream>
 # include <string>
 # include <iostream>
@@ -66,6 +66,7 @@ class Server
 		void    handle_name(std::vector<std::string> &tokens);
 		void    eraseClient(int fd);
 	    void    eraseClientFromCh(std::vector<Channel>::iterator it, int fd);
+		bool	isValidNick(std::vector<std::string>::iterator &tokens_it);
 
         void	pass(std::vector<std::string> &tokens, int fd);
 		void	nick(std::vector<std::string> &tokens, int fd);

@@ -46,6 +46,7 @@ int Server::init(int port, std::string pass)
 	char name[1024];
 	int opt = 1;
 
+	_date = __DATE__;
 	gethostname(name, sizeof(name));
 	_hostname = name;
 	_passwd = pass;
@@ -54,17 +55,16 @@ int Server::init(int port, std::string pass)
 
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd == -1)
-		return (-1);
+		return (perror("socket"), -1);
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) != 0)
-		return (-1);
+		return (perror("setsockopt"), -1);
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-		return -1;
+		return (perror("fcntl F_SETFL"), -1);
 	_serverfd = fd;
 	_maxfd = fd;
 
 	FD_ZERO(&_current);
 	FD_SET(_serverfd, &_current);
-
 
 	memset(&_servaddr, 0, sizeof(_servaddr));
 	_servaddr.sin_port = htons(port);
@@ -73,14 +73,15 @@ int Server::init(int port, std::string pass)
 	if ((bind(fd, (const sockaddr *)&_servaddr, sizeof(_servaddr))) == -1)
 		return (-1);
 	_len = sizeof(_servaddr);
+	
+	if (listen(_serverfd, QEUE) == -1)
+		return (perror("listen"), -1);
+	std::cout << "Server is listening on port: " << port << std::endl;
 
 	return (0);
 }
 
 int Server::Start() {
-	
-	if (listen(_serverfd, QEUE) == -1)
-		return (-1);
 
 	while (1) {
 
@@ -89,7 +90,7 @@ int Server::Start() {
 			return (-1);
 
 		for (int fd = 0; fd <= _maxfd; ++fd) {
-			
+
 			if (FD_ISSET(fd, &_read_set)) {
 				int clientfd, ret;
 				if (fd == _serverfd) {
@@ -99,6 +100,7 @@ int Server::Start() {
 					++_c_id;
 					Client client(clientfd, _c_id);
 					_clients.push_back(client);
+					std::cout << "Client " << _c_id << " joined the server" << std::endl;
 					FD_SET(clientfd, &_current);
 					if (_maxfd < clientfd)
 						_maxfd = clientfd;
@@ -119,13 +121,12 @@ int Server::Start() {
 						continue;
 					else {
 						_buff[ret-1] = '\0';
-						// if (std::string(_buff).find_first_not_of(" \n") == std::string::npos)
 						parse_cl(fd);
 						// buraya cemal ekstra koşullar eklemiş bir tek /n var gibi vb onlara bak
 						// sendToClis(fd);
 					}
-					memset(_buff, 0, sizeof(_buff));
 				}
+				memset(_buff, 0, sizeof(_buff));
 			}
 		}
 	}
@@ -147,10 +148,17 @@ void read_from_buffer(std::vector<std::string> &lines, char *buff) {
 	}
 }
 
-template <typename T>
-void print_vec(T vec) {
-	for (typename T::iterator it = vec.begin(); it != vec.end(); ++it)
-		std::cout << *it << std::endl;
+void	splitSpaces(std::vector<std::string> &tokens, std::string &str)
+{
+	std::string token;
+	std::istringstream iss(str);
+
+	while (std::getline(iss, token, ' '))
+	{
+		if (token.length() == 0 || token == "\n")
+			continue ;
+		tokens.push_back(token);
+	}
 }
 
 void Server::parse_cl(int fd)
@@ -162,16 +170,8 @@ void Server::parse_cl(int fd)
 	std::vector<std::string>::iterator lines_it = lines.begin();
 	while (lines_it != lines.end())
 	{
-		std::string token;
 		std::vector<std::string> tokens;
-		std::istringstream isslines(*lines_it);
-
-		while (std::getline(isslines, token, ' '))
-		{
-			if (token.length() == 0 || token == "\n")
-				continue ;
-			tokens.push_back(token);
-		}
+		splitSpaces(tokens, *lines_it);
 	
 		std::vector<std::string>::iterator tokens_it = tokens.begin();
 		if (tokens_it == tokens.end())
@@ -311,21 +311,16 @@ void Server::sendToClisInCh(std::vector<Channel>::iterator it, std::string msg, 
     while (client_it != it->clients_ch.end())
     {
         if (client_it->getFd() != fd)
-            send(client_it->getFd(), msg.c_str(), sizeof(msg), 0);
+			sendReply(msg, client_it->getFd());
         client_it++;
     }
 }
 
 std::string Server::getHostname() const { return _hostname; }
 
-std::string Prefix(Server &s, int fd)
-{
-    return ":" + (s.findClient(fd))->getNick() + "!" + s.findClient(fd)->getUname() + "@" + s.getHostname();
-}
-
 void Server::sendReply(std::string msg, int fd)
 {
-    std::string reply = Prefix(*this, fd) + msg + "\r\n";
+    std::string reply = YELLOW(getHostname(), msg);
 	send(fd, reply.c_str(), reply.length(), 0);
 }
 
