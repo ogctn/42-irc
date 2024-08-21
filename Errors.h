@@ -5,8 +5,8 @@
 #define RPL_YOURHOST(nick, host) (":" + host + " 002 " + nick + " :Your host is " + host + ", running version v1.0.0\r\n")
 #define RPL_CREATED(nick, host, date) (":" + host + " 003 " + nick + " :This server was created " + date + "\r\n")
 
-#define RPL_NOTOPIC(nick, channel) (" 331 " + nick + " " + channel + " :No topic is set")
-#define RPL_TOPIC(nick, channel, topic) (" 332 " + nick + " " + channel + " " + topic)
+#define RPL_NOTOPIC(hostname, nickName, channel) (std::string(":") + hostname + " 331 " + nickName + " " + channel + " :No topic is set" + "\r\n")
+#define RPL_TOPIC(hostname, nickName, channel, topic) (std::string(":") + hostname + " 332 " + nickName + " " + channel + " :" + topic + "\r\n")
 #define RPL_JOIN(nick, user, channel) (":" + nick + "!" + user + "@*" + " JOIN " + channel)
 #define RPL_PRIV(nick, user, channel, msg) (":" + nick + "!" + user + "@*" + " PRIVMSG " + channel + " :" + msg)
 #define RPL_PRIVUS(nick, user, receiver, msg) (":" + nick + "!" + user + "@*" + " PRIVMSG " + receiver + " :" + msg)
@@ -20,8 +20,8 @@
 #define NICKNAME_IN_USE(nickname) (" 433 " + nickname + " :Nickname is already in use. Please provide your password with 'USERPASS: <password> if you have this nickname already!'")
 
 #define TOPICCHANGED(nickname, username, channelname, topic) (":" + nickname + "!" + username + "@* TOPIC " + channelname + " " + topic)
-#define PART(nickname, username, channelname) (":"+ nickname + "!" + username +"@* PART " + channelname)
-#define PARTWITHREASON(nickname, username, channelname, reason) (":"+ nickname + "!" + username + "@* PART " + channelname + " " + reason)
+#define PART(hostname, nickname, username, channelname) (": "+ hostname + " " + nickname + " ! " + username + " @* PART " + channelname)
+#define PARTWITHREASON(hostname, nickname, username, channelname, reason) (": " + hostname + " " + nickname + " ! " + username + " @* PART " + channelname + " " + reason)
 
 
 #define ERR_USERNOTINCHANNEL(host, notyournick, channel) (": 441 " + host + " " + channel + " " + notyournick + " :They aren't on that channel\r\n")

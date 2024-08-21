@@ -123,7 +123,6 @@ int Server::Start() {
 						_buff[ret-1] = '\0';
 						parse_cl(fd);
 						// buraya cemal ekstra koşullar eklemiş bir tek /n var gibi vb onlara bak
-						// sendToClis(fd);
 					}
 				}
 				memset(_buff, 0, sizeof(_buff));
@@ -262,19 +261,6 @@ std::vector<Channel>::iterator Server::findChannel(std::string str)
 	return (channel_it);
 }
 
-void Server::sendToClis(int fd)
-{
-    std::string meta = std::to_string(findClient(fd)->getId()) + ": ";
-    for (int i = 0; i <= _maxfd; i++)
-    {
-        if (i != fd && FD_ISSET(i, &_write_set))
-        {
-            send(i, meta.c_str(), sizeof(meta), 0);
-            send(i, _buff, sizeof(_buff), 0);
-        }
-    }
-}
-
 void Server::eraseClient(int fd)
 {
     _clients.erase(findClient(fd));
@@ -311,7 +297,7 @@ void Server::sendToClisInCh(std::vector<Channel>::iterator it, std::string msg, 
     while (client_it != it->clients_ch.end())
     {
         if (client_it->getFd() != fd)
-			sendReply(msg, client_it->getFd());
+			sendCl(msg, client_it->getFd());//tekrar bakılacak
         client_it++;
     }
 }

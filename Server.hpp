@@ -58,7 +58,6 @@ class Server
 
 		std::string getHostname() const;
 
-		void    sendToClis(int fd);
 		void    sendToClisInCh(std::vector<Channel>::iterator it, std::string msg,int fd);
 		void	sendCl(std::string msg, int fd);
 		void    parse_cl(int fd);
