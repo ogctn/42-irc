@@ -17,11 +17,9 @@
 #define KICK(nick, user, channel, kicked) (":" + nick + "!" + user + "@* KICK " + channel + " " + kicked)
 #define NOTICE(nick, user, noticed, msg) (":" + nick + "!" + user + "@* NOTICE " + noticed + " " + msg)
 
-#define NICKNAME_IN_USE(nickname) (" 433 " + nickname + " :Nickname is already in use. Please provide your password with 'USERPASS: <password> if you have this nickname already!'")
-
-#define TOPICCHANGED(nickname, username, channelname, topic) (":" + nickname + "!" + username + "@* TOPIC " + channelname + " " + topic)
-#define PART(hostname, nickname, username, channelname) (": "+ hostname + " " + nickname + " ! " + username + " @* PART " + channelname)
-#define PARTWITHREASON(hostname, nickname, username, channelname, reason) (": " + hostname + " " + nickname + " ! " + username + " @* PART " + channelname + " " + reason)
+#define TOPICCHANGED(nickname, username, channelname, topic) (":" + nickname + "!" + username + "@* TOPIC " + channelname + " " + topic + "\r\n")
+#define PART(hostname, nickname, username, channelname) (": "+ hostname + " " + nickname + " ! " + username + " @* PART " + channelname + "\r\n")
+#define PARTWITHREASON(hostname, nickname, username, channelname, reason) (": " + hostname + " " + nickname + " ! " + username + " @* PART " + channelname + " " + reason + "\r\n")
 
 
 #define ERR_USERNOTINCHANNEL(host, notyournick, channel) (": 441 " + host + " " + channel + " " + notyournick + " :They aren't on that channel\r\n")

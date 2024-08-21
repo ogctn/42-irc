@@ -7,12 +7,15 @@ void Server::pass(std::vector<std::string> &tokens, int fd)
 
 	if(tokens.size() == 2)
 	{
-		if(*(tokens_it + 1) != _passwd)
-			sendCl(ERR_PASSWDMISMATCH(getHostname()), fd);
-		else if (client_it->is_auth == true)
+		if (client_it->is_auth == true)
 			sendCl(ERR_ALREADYREGISTERED(getHostname(), client_it->getNick()), fd);
+		else if(*(tokens_it + 1) != _passwd)
+			sendCl(ERR_PASSWDMISMATCH(getHostname()), fd);
 		else
+		{
+			sendReply("Password accepted", fd);
 			client_it->is_auth = true;
+		}
 	}
 	else
 		sendCl(ERR_NEEDMOREPARAMS(client_it->getNick(), *(tokens.begin())), fd);
@@ -54,18 +57,18 @@ void Server::nick(std::vector<std::string> &tokens, int fd)
 void Server::quit(std::vector<std::string> &tokens, int fd)
 {
 	handle_name(tokens);
-    if (tokens.size() == 1 || (tokens.size() == 2 && tokens[1][0] == ':'))
+    if (tokens.size() == 1)
     {
 		sendReply("Client "+ std::to_string(findClient(fd)->getId())
-					 + " left the server " + "\r\n", fd);
+					 + " left the server ", fd);
         FD_CLR(fd, &_current);
 		eraseClient(fd);
         close(fd);
     }
-	else if (tokens.size() == 2 && tokens[1][0] != ':')
+	else if (tokens.size() == 2 && tokens[1][0] == ':')
 	{
 		sendReply("Client "+ std::to_string(findClient(fd)->getId())
-					 + " left the server " + tokens[1] + "\r\n", fd);
+					 + " left the server " + tokens[1], fd);
 		FD_CLR(fd, &_current);
 		eraseClient(fd);
 		close(fd);
@@ -188,7 +191,7 @@ void Server::kick(std::vector<std::string> &tokens, int fd)
 	{
 		std::vector<Client>::iterator clientkick_it = findClientNick((*(tokens_it + 2)));
 		if(ch_it == channels.end())
-			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
+			sendCl(ERR_NOSUCHCHANNEL(_hostname, (*(tokens_it + 1))), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else if(findClientInCh(ch_it, fd)->is_operator == false)
@@ -247,18 +250,17 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 
 	if(tokens.size() == 3 && (*(tokens_it + 2))[0] == ':' && (*(tokens_it + 2)).length() >= 2)
 	{
-		*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
-		if ((*(tokens_it + 1))[0] == '#')
+		if((*(tokens_it + 1))[0] == '#')
 		{
+			*(tokens_it + 2) = (*(tokens_it + 2)).substr(1, (*(tokens_it + 2)).length() - 1);
 			if (ch_it == channels.end())
 				sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
 			else if (findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 				sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 			else
-				sendToClisInCh(ch_it, ":ADMIN!ADMIN@ADMIN NOTICE " + *(tokens_it + 1) + " " + *(tokens_it + 2) + "\r\n", fd); 
+				sendToClisInCh(ch_it, ":ADMIN!ADMIN@ADMIN NOTICE " 
+				+ *(tokens_it + 1) + " " + *(tokens_it + 2) + "\r\n", fd); 
 		}
-		else
-			sendCl(ERR_NOSUCHCHANNEL(_hostname, ch_it->getName()), fd);
 	}
 	else
 		sendReply("Command form is: NOTICE <recipient> :<message>",fd);
@@ -296,13 +298,14 @@ void Server::part(std::vector<std::string> &tokens, int fd)
 	else
 		sendReply("Command form is: PART <channel> :[<message>]",fd);
 }
+
 void Server::ping(std::vector<std::string> &tokens, int fd)
 {
 	handle_name(tokens);
-	if(tokens.size() == 1 || (tokens.size() == 2 && tokens[1][0] == ':'))
-		sendCl("PONG " + tokens[1] + "\r\n", fd);
+	if(tokens.size() == 2 && tokens[1][0] != ':')
+		sendReply("PONG :" + tokens[1] + "\r\n", fd);
 	else
-		sendReply("Command form is: PING :[<message>]",fd);
+		sendReply("PONG\r\n", fd);
 }
 
 void Server::cap(std::vector<std::string> &tokens, int fd)
