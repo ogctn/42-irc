@@ -16,7 +16,7 @@ void	Server::arg_control(int ac, char **av)
 		throw std::string("error on PASS argument");
 	if (port.length() <= 0 || port.find_first_of(" \r\n") != std::string::npos)
 		throw std::string("error on PORT argument");
-   	
+
 	for(size_t i = 0; i < port.length(); i++) {
 		if (!std::isdigit(port[i]))
 			throw std::string("error on PORT argument");
@@ -26,7 +26,7 @@ void	Server::arg_control(int ac, char **av)
 		port_num = std::stoi(port);
 	} catch(std::exception &e) {
 		throw std::string(e.what());
-	} 
+	}
 
 	if (port_num >= (1 << 16) || port_num < 1000)
 		throw std::string("PORT argument must be in range of [1000 2^16]");
@@ -73,7 +73,7 @@ int Server::init(int port, std::string pass)
 	if ((bind(fd, (const sockaddr *)&_servaddr, sizeof(_servaddr))) == -1)
 		return (-1);
 	_len = sizeof(_servaddr);
-	
+
 	if (listen(_serverfd, QEUE) == -1)
 		return (perror("listen"), -1);
 	std::cout << "Server is listening on port: " << port << std::endl;
@@ -113,8 +113,8 @@ int Server::Start() {
 						else
 							std::cerr << "recv error\n";
 						FD_CLR(fd, &_current);
-						close(fd);
 						eraseClient(fd);
+						close(fd);
 					}
 					else if (ret == 1 && *_buff == '\n')
 						continue;
@@ -132,7 +132,7 @@ int Server::Start() {
 
 
 void read_from_buffer(std::vector<std::string> &lines, char *buff) {
-	
+
 	std::istringstream iss(buff);
 	std::string line;
 
@@ -170,7 +170,7 @@ void Server::parse_cl(int fd)
 	{
 		std::vector<std::string> tokens;
 		splitSpaces(tokens, *lines_it);
-	
+
 		std::vector<std::string>::iterator tokens_it = tokens.begin();
 		if (tokens_it == tokens.end())
 		{
@@ -193,6 +193,8 @@ void Server::parse_cl(int fd)
             sendCl(YELLOW(getHostname(), "PASS-NICK-USER before sending any other commands"), fd);
         else if (*tokens_it == "JOIN")
 			join(tokens, fd);
+		else if (*tokens_it == "MODE" || *tokens_it == "WHO")
+			;
 		else if (*tokens_it == "PRIVMSG")
 			privmsg(tokens, fd);
 		else if (*tokens_it == "KICK")
@@ -207,8 +209,8 @@ void Server::parse_cl(int fd)
 			topic(tokens, fd);
 		else
 			sendCl(ERR_UNKNOWNCOMMAND(getHostname(), *tokens_it), fd);
-		
-		lines_it++;	
+
+		lines_it++;
 	}
 }
 
@@ -332,14 +334,14 @@ void Server::handle_name(std::vector<std::string> &tokens)
 		(*it).append(" ");
 		(*it).append((*(it + 1)));
 		tokens.erase(it+1);
-	}  
+	}
 }
 
 int	Server::can_apply(std::vector<std::string>::iterator tokens_it, std::vector<Client>::iterator client_it)
 {
-	if((*tokens_it == "JOIN" || *tokens_it == "PRIVMSG" || *tokens_it == "KICK" 
-        || *tokens_it == "TOPIC" || *tokens_it == "NOTICE" 
-        || *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered 
+	if((*tokens_it == "JOIN" || *tokens_it == "PRIVMSG" || *tokens_it == "KICK"
+        || *tokens_it == "TOPIC" || *tokens_it == "NOTICE"
+        || *tokens_it == "PART") && (!client_it->is_auth || !client_it->is_registered
         || client_it->getNick().length() == 0))
 		return (0);
 	else

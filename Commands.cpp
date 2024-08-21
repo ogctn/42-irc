@@ -105,7 +105,7 @@ void	Server::user(std::vector<std::string> &tokens, int fd)
 std::string Prefix(std::vector<Client>::iterator users, std::string host)
 {
     return ":" + users->getNick() + "!" + users->getUname() + "@" + host;
-} 
+}
 void Server::join(std::vector<std::string> &tokens, int fd)
 {
 	std::vector<std::string>::iterator tokens_it = tokens.begin();
@@ -204,6 +204,7 @@ void Server::kick(std::vector<std::string> &tokens, int fd)
 		{
 			std::string msg = *(tokens_it) + " " + (*(tokens_it + 1)) + " " + (*(tokens_it + 2));
 			sendToClisInCh(ch_it, Prefix(client_it, _hostname) + " " + msg + "\r\n", fd);
+			sendCl(Prefix(client_it, _hostname) + " " + msg + "\r\n", fd);
 			eraseClientFromCh(ch_it, clientkick_it->getFd());
 		}
 	}
@@ -238,7 +239,7 @@ void Server::topic(std::vector<std::string> &tokens, int fd)
 		}
 	}
 	else
-		sendReply("Command form is: TOPIC <channel> <topic>",fd);
+		sendReply("Command form is: TOPIC <channel> :<topic>",fd);
 
 }
 
@@ -258,8 +259,13 @@ void Server::notice(std::vector<std::string> &tokens, int fd)
 			else if (findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 				sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 			else
-				sendToClisInCh(ch_it, ":ADMIN!ADMIN@ADMIN NOTICE " 
-				+ *(tokens_it + 1) + " " + *(tokens_it + 2) + "\r\n", fd); 
+			{
+
+				sendToClisInCh(ch_it, ":ADMIN!ADMIN@ADMIN NOTICE "
+				+ *(tokens_it + 1) + " " + *(tokens_it + 2) + "\r\n", fd);
+				sendCl(":ADMIN!ADMIN@ADMIN NOTICE "
+				+ *(tokens_it + 1) + " " + *(tokens_it + 2) + "\r\n", fd);
+			}
 		}
 	}
 	else
@@ -274,25 +280,27 @@ void Server::part(std::vector<std::string> &tokens, int fd)
 	if((*(tokens_it + 1))[0] == '#' && (*(tokens_it + 1)).length() >= 2 && ((tokens.size() >= 3 && tokens[2][0] == ':') || tokens.size() == 2))
 	{
 		if (tokens.size() >= 3)
-            handle_name(tokens);
+			handle_name(tokens);
 		if(ch_it == channels.end())
 			sendCl(ERR_NOSUCHCHANNEL(_hostname, *(tokens_it + 1)), fd);
 		else if(findClientInCh(ch_it, fd) == ch_it->clients_ch.end())
 			sendCl(ERR_NOTONCHANNEL(_hostname, ch_it->getName()), fd);
 		else
 		{
-			eraseClientFromCh(ch_it, fd);
 			if(tokens.size() >= 3)
 			{
 				sendToClisInCh(ch_it, PARTWITHREASON(_hostname, client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
-				sendReply(PARTWITHREASON(_hostname, client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
+				sendCl(PARTWITHREASON(_hostname, client_it->getNick(), client_it->getUname(), tokens[1], tokens[2]), fd);
 
 			}
 			else
 			{
-				sendToClisInCh(ch_it , PART(_hostname, client_it->getNick(), client_it->getUname(), tokens[1]), fd);
-				sendReply(PART(_hostname, client_it->getNick(), client_it->getUname(), tokens[1]), fd);
+				//sendToClisInCh(ch_it , PART(_hostname, client_it->getNick(), client_it->getUname(), tokens[1]), fd);
+				//sendCl(PART(_hostname, client_it->getNick(), client_it->getUname(), tokens[1]), fd);
+				sendCl((Prefix(findClient(fd), _hostname) + " PART " + ch_it->getName() + "\r\n"), fd);
+				sendToClisInCh(ch_it, (Prefix(findClient(fd), _hostname) + " PART " + ch_it->getName() + "\r\n"), fd);
 			}
+			eraseClientFromCh(ch_it, fd);
 		}
 	}
 	else

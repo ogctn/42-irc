@@ -66,6 +66,8 @@ class Server
 		void    eraseClient(int fd);
 	    void    eraseClientFromCh(std::vector<Channel>::iterator it, int fd);
 		bool	isValidNick(std::vector<std::string>::iterator &tokens_it);
+		void	sendReply(std::string msg, int fd);
+		int		can_apply(std::vector<std::string>::iterator tokens_it, std::vector<Client>::iterator client_it);
 
         void	pass(std::vector<std::string> &tokens, int fd);
 		void	nick(std::vector<std::string> &tokens, int fd);
@@ -79,8 +81,6 @@ class Server
 		void	part(std::vector<std::string> &tokens, int fd);
 		void	cap(std::vector<std::string> &tokens, int fd);
 		void	ping(std::vector<std::string> &tokens, int fd);
-		void	sendReply(std::string msg, int fd);
-		int		can_apply(std::vector<std::string>::iterator tokens_it, std::vector<Client>::iterator client_it);
 
 };
 

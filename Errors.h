@@ -19,7 +19,7 @@
 
 #define TOPICCHANGED(nickname, username, channelname, topic) (":" + nickname + "!" + username + "@* TOPIC " + channelname + " " + topic + "\r\n")
 #define PART(hostname, nickname, username, channelname) (": "+ hostname + " " + nickname + " ! " + username + " @* PART " + channelname + "\r\n")
-#define PARTWITHREASON(hostname, nickname, username, channelname, reason) (": " + hostname + " " + nickname + " ! " + username + " @* PART " + channelname + " " + reason + "\r\n")
+#define PARTWITHREASON(hostname, nickname, username, channelname, reason) (": " + hostname + " " + nickname + "!" + username + " @* PART " + channelname + " " + reason + "\r\n")
 
 
 #define ERR_USERNOTINCHANNEL(host, notyournick, channel) (": 441 " + host + " " + channel + " " + notyournick + " :They aren't on that channel\r\n")
